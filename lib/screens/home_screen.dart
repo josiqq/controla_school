@@ -1,12 +1,44 @@
-// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import '../widgets/feature_card.dart';
+import '../widgets/common/stat_card.dart';
+import '../widgets/common/section_title.dart';
+import '../widgets/navigation/app_drawer.dart';
+import '../widgets/navigation/bottom_nav_bar.dart';
 import '../config/theme.dart';
 import 'settings_screen.dart';
-import 'login_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentNavIndex = 0;
+
+  void _onNavItemTapped(int index) {
+    if (index == _currentNavIndex) return;
+    
+    setState(() => _currentNavIndex = index);
+    
+    // Mostrar mensaje para pestañas en desarrollo
+    if (index != 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Próximamente disponible'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      // Volver al inicio después de un momento
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          setState(() => _currentNavIndex = 0);
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +53,20 @@ class HomeScreen extends StatelessWidget {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.notifications_outlined),
+            tooltip: 'Notificaciones',
+            color: AppTheme.primaryColor,
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('No tienes nuevas notificaciones'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
             tooltip: 'Configuración',
             color: AppTheme.primaryColor,
             onPressed: () {
@@ -30,16 +75,9 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-            color: AppTheme.primaryColor,
-            onPressed: () {
-              _showLogoutDialog(context);
-            },
-          ),
         ],
       ),
+      drawer: const AppDrawer(currentRoute: '/home'),
       body: Container(
         color: AppTheme.backgroundColor,
         child: SafeArea(
@@ -48,18 +86,24 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 _buildWelcomeCard(),
                 const SizedBox(height: 30),
+                const SectionTitle(title: 'Resumen Rápido', icon: Icons.dashboard_rounded),
+                const SizedBox(height: 15),
                 _buildQuickStats(),
                 const SizedBox(height: 30),
-                _buildSectionTitle('Funcionalidades'),
+                const SectionTitle(title: 'Funcionalidades', icon: Icons.apps_rounded),
                 const SizedBox(height: 15),
                 const FeatureCard(),
               ],
             ),
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentNavIndex,
+        onTap: _onNavItemTapped,
       ),
     );
   }
@@ -73,15 +117,7 @@ class HomeScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(24.0),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.primaryColor.withValues(alpha: 0.1),
-              AppTheme.backgroundColor,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          
         ),
         child: Column(
           children: [
@@ -100,7 +136,7 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
               child: const Icon(
-                Icons.check_circle,
+                Icons.check_circle_rounded,
                 size: 50,
                 color: AppTheme.primaryColor,
               ),
@@ -135,8 +171,8 @@ class HomeScreen extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _buildStatCard(
-            icon: Icons.school,
+          child: StatCard(
+            icon: Icons.school_rounded,
             title: 'Estudiantes',
             value: '0',
             color: AppTheme.primaryColor,
@@ -144,8 +180,8 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(width: 15),
         Expanded(
-          child: _buildStatCard(
-            icon: Icons.class_,
+          child: StatCard(
+            icon: Icons.class_rounded,
             title: 'Clases',
             value: '0',
             color: AppTheme.accentColor,
@@ -153,127 +189,14 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(width: 15),
         Expanded(
-          child: _buildStatCard(
-            icon: Icons.event,
+          child: StatCard(
+            icon: Icons.event_rounded,
             title: 'Eventos',
             value: '0',
             color: AppTheme.primaryColor.withValues(alpha: 0.8),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildStatCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-  }) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.textColor.withValues(alpha: 0.7),
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4.0),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: AppTheme.primaryColor,
-        ),
-      ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Cerrar Sesión',
-            style: TextStyle(
-              color: AppTheme.primaryColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: const Text(
-            '¿Estás seguro de que deseas cerrar sesión?',
-            style: TextStyle(color: AppTheme.textColor),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(
-                'Cancelar',
-                style: TextStyle(
-                  color: AppTheme.textColor.withValues(alpha: 0.6),
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
-              child: const Text('Cerrar Sesión'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

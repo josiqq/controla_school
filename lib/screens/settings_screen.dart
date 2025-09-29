@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../widgets/common/user_profile_header.dart';
+import '../widgets/common/custom_card.dart';
+import '../widgets/common/section_title.dart';
 import '../config/theme.dart';
 import 'login_screen.dart';
 
@@ -158,7 +161,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         iconTheme: const IconThemeData(color: AppTheme.primaryColor),
       ),
       body: _isLoading
-          ? Center(
+          ? const Center(
               child: CircularProgressIndicator(
                 color: AppTheme.primaryColor,
               ),
@@ -168,7 +171,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildUserSection(),
+                  UserProfileHeader(
+                    userName: _userName,
+                    userEmail: _userEmail,
+                  ),
                   const SizedBox(height: 30),
                   _buildSecuritySection(),
                   const SizedBox(height: 30),
@@ -181,244 +187,146 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildUserSection() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.primaryColor.withValues(alpha: 0.05),
-              AppTheme.backgroundColor,
+  Widget _buildSecuritySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionTitle(title: 'Seguridad', icon: Icons.security_rounded),
+        const SizedBox(height: 10),
+        CustomCard(
+          child: Column(
+            children: [
+              SwitchListTile(
+                title: const Text(
+                  'Autenticación Biométrica',
+                  style: TextStyle(
+                    color: AppTheme.textColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  _biometricAvailable
+                      ? 'Usa tu huella dactilar o Face ID para iniciar sesión'
+                      : 'No disponible en este dispositivo',
+                  style: TextStyle(
+                    color: _biometricAvailable 
+                        ? AppTheme.textColor.withValues(alpha: 0.6)
+                        : Colors.red.withValues(alpha: 0.8),
+                    fontSize: 13,
+                  ),
+                ),
+                value: _biometricEnabled && _biometricAvailable,
+                onChanged: _biometricAvailable ? _toggleBiometric : null,
+                secondary: Icon(
+                  Icons.fingerprint_rounded,
+                  color: _biometricAvailable 
+                      ? AppTheme.primaryColor 
+                      : AppTheme.textColor.withValues(alpha: 0.3),
+                  size: 28,
+                ),
+                activeColor: AppTheme.primaryColor,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              ),
+              const Divider(height: 1),
+              _buildSettingsTile(
+                icon: Icons.lock_outline_rounded,
+                title: 'Cambiar Contraseña',
+                onTap: () => _showMessage('Función en desarrollo'),
+              ),
+              const Divider(height: 1),
+              _buildSettingsTile(
+                icon: Icons.shield_outlined,
+                title: 'Privacidad',
+                onTap: () => _showMessage('Función en desarrollo'),
+              ),
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _userName,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textColor,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _userEmail,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textColor.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSecuritySection() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Seguridad',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 20),
-            SwitchListTile(
-              title: const Text(
-                'Autenticación Biométrica',
-                style: TextStyle(color: AppTheme.textColor),
-              ),
-              subtitle: Text(
-                _biometricAvailable
-                    ? 'Usa tu huella dactilar o Face ID para iniciar sesión'
-                    : 'No disponible en este dispositivo',
-                style: TextStyle(
-                  color: _biometricAvailable 
-                      ? AppTheme.textColor.withValues(alpha: 0.6)
-                      : Colors.red,
-                ),
-              ),
-              value: _biometricEnabled && _biometricAvailable,
-              onChanged: _biometricAvailable ? _toggleBiometric : null,
-              secondary: Icon(
-                Icons.fingerprint,
-                color: _biometricAvailable 
-                    ? AppTheme.primaryColor 
-                    : AppTheme.textColor.withValues(alpha: 0.3),
-              ),
-              activeThumbColor: AppTheme.primaryColor,
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(
-                Icons.lock_outline,
-                color: AppTheme.primaryColor,
-              ),
-              title: const Text(
-                'Cambiar Contraseña',
-                style: TextStyle(color: AppTheme.textColor),
-              ),
-              trailing: Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: AppTheme.textColor.withValues(alpha: 0.4),
-              ),
-              onTap: () {
-                _showMessage('Función en desarrollo');
-              },
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 
   Widget _buildAboutSection() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Acerca de',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(
-                Icons.info_outline,
-                color: AppTheme.primaryColor,
-              ),
-              title: const Text(
-                'Versión',
-                style: TextStyle(color: AppTheme.textColor),
-              ),
-              trailing: Text(
-                '1.0.0',
-                style: TextStyle(
-                  color: AppTheme.textColor.withValues(alpha: 0.6),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionTitle(title: 'Acerca de', icon: Icons.info_outline_rounded),
+        const SizedBox(height: 10),
+        CustomCard(
+          child: Column(
+            children: [
+              _buildSettingsTile(
+                icon: Icons.info_outline_rounded,
+                title: 'Versión',
+                trailing: Text(
+                  '1.0.0',
+                  style: TextStyle(
+                    color: AppTheme.textColor.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(
-                Icons.description_outlined,
-                color: AppTheme.primaryColor,
+              const Divider(height: 1),
+              _buildSettingsTile(
+                icon: Icons.description_outlined,
+                title: 'Términos y Condiciones',
+                onTap: () => _showMessage('Función en desarrollo'),
               ),
-              title: const Text(
-                'Términos y Condiciones',
-                style: TextStyle(color: AppTheme.textColor),
+              const Divider(height: 1),
+              _buildSettingsTile(
+                icon: Icons.privacy_tip_outlined,
+                title: 'Política de Privacidad',
+                onTap: () => _showMessage('Función en desarrollo'),
               ),
-              trailing: Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: AppTheme.textColor.withValues(alpha: 0.4),
+              const Divider(height: 1),
+              _buildSettingsTile(
+                icon: Icons.help_outline_rounded,
+                title: 'Ayuda y Soporte',
+                onTap: () => _showMessage('Función en desarrollo'),
               ),
-              onTap: () {
-                _showMessage('Función en desarrollo');
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(
-                Icons.privacy_tip_outlined,
-                color: AppTheme.primaryColor,
-              ),
-              title: const Text(
-                'Política de Privacidad',
-                style: TextStyle(color: AppTheme.textColor),
-              ),
-              trailing: Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: AppTheme.textColor.withValues(alpha: 0.4),
-              ),
-              onTap: () {
-                _showMessage('Función en desarrollo');
-              },
-            ),
-          ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required String title,
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: AppTheme.primaryColor,
+        size: 24,
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: AppTheme.textColor,
+          fontWeight: FontWeight.w500,
         ),
       ),
+      trailing: trailing ?? Icon(
+        Icons.arrow_forward_ios_rounded,
+        size: 16,
+        color: AppTheme.textColor.withValues(alpha: 0.4),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      onTap: onTap,
     );
   }
 
   Widget _buildLogoutButton() {
     return SizedBox(
       width: double.infinity,
-      height: 50,
+      height: 54,
       child: ElevatedButton.icon(
         onPressed: _handleLogout,
-        icon: const Icon(Icons.logout),
+        icon: const Icon(Icons.logout_rounded, size: 22),
         label: const Text(
           'Cerrar Sesión',
           style: TextStyle(
