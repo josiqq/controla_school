@@ -24,7 +24,6 @@ class AppTheme {
       colorScheme: ColorScheme.light(
         primary: primaryColor,
         secondary: accentColor,
-        background: backgroundColor,
         surface: backgroundColor,
         onPrimary: backgroundColor,
         onSurface: textColor,
@@ -73,7 +72,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
-        hintStyle: TextStyle(color: textColor.withOpacity(0.5)),
+        hintStyle: TextStyle(color: textColor.withValues(alpha: 0.5)),
       ),
 
       textTheme: TextTheme(

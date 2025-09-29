@@ -1,3 +1,4 @@
+import 'package:controla_school/screens/register_screen.dart';
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../services/auth_service.dart';
@@ -30,17 +31,14 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLoginSuccess() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
   }
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -64,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
                   _buildRegisterLink(),
                   const SizedBox(height: 10),
-                  _buildTestCredentials(),
+                  // _buildTestCredentials(),
                 ],
               ),
             ),
@@ -101,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       children: [
         const Text(
-          'Bienvenido',
+          'Bienvenid@',
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
@@ -111,10 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 8),
         const Text(
           'Inicia sesión para continuar',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.white70,
-          ),
+          style: TextStyle(fontSize: 16, color: Colors.white70),
         ),
       ],
     );
@@ -172,46 +167,44 @@ class _LoginScreenState extends State<LoginScreen> {
           style: TextStyle(color: Colors.white70),
         ),
         TextButton(
-          onPressed: () => _showMessage('Función no implementada'),
+          onPressed: () {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const RegisterScreen()),
+            );
+          },
           child: const Text(
             'Regístrate',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTestCredentials() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Column(
-        children: [
-          Text(
-            'Credenciales de prueba:',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 4),
-          Text(
-            'Email: admin@school.com',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          Text(
-            'Contraseña: 123456',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildTestCredentials() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(12),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white.withValues(alpha: 0.2),
+  //       borderRadius: BorderRadius.circular(8),
+  //     ),
+  //     child: const Column(
+  //       children: [
+  //         Text(
+  //           'Credenciales de prueba:',
+  //           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+  //         ),
+  //         SizedBox(height: 4),
+  //         Text(
+  //           'Email: admin@school.com',
+  //           style: TextStyle(color: Colors.white70, fontSize: 12),
+  //         ),
+  //         Text(
+  //           'Contraseña: 123456',
+  //           style: TextStyle(color: Colors.white70, fontSize: 12),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

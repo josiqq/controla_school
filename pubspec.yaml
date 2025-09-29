@@ -12,6 +12,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+ 
+  # Firebase dependencies
+  firebase_core: ^4.1.1
+  firebase_auth: ^6.1.0
+  cloud_firestore: ^6.0.2
+  
   cupertino_icons: ^1.0.8
   local_auth: ^2.3.0
   animate_do: ^4.2.0
