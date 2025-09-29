@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/theme.dart';
 import '../config/constants.dart';
 import '../services/auth_service.dart';
+import 'onboarding_screen.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 
@@ -26,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
-    _checkAuthStatus();
+    _checkFirstTimeAndAuth();
   }
 
   void _initializeAnimations() {
@@ -59,38 +61,48 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
   }
 
-  Future<void> _checkAuthStatus() async {
-    // Esperar un mínimo de tiempo para mostrar el splash
+  Future<void> _checkFirstTimeAndAuth() async {
     await Future.delayed(const Duration(seconds: 2));
     
     try {
-      // Verificar si hay un usuario autenticado
+      final prefs = await SharedPreferences.getInstance();
+      final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
+
+      // Si es la primera vez, mostrar onboarding
+      if (!onboardingCompleted) {
+        _navigateToOnboarding();
+        return;
+      }
+
+      // Si no es la primera vez, verificar autenticación
       final currentUser = _authService.currentUser;
       
       if (currentUser != null) {
-        // Usuario ya autenticado, verificar si tiene biometría habilitada
         final biometricEnabled = await _authService.isBiometricEnabled();
         final biometricAvailable = await _authService.checkBiometricAvailability();
         
         if (biometricEnabled && biometricAvailable) {
-          // Intentar autenticación biométrica
           _showBiometricPrompt();
         } else {
-          // Ir directo a home si no hay biometría configurada
           _navigateToHome();
         }
       } else {
-        // No hay usuario autenticado, ir al login
         _navigateToLogin();
       }
     } catch (e) {
-      // En caso de error, ir al login
       _navigateToLogin();
     }
   }
 
+  void _navigateToOnboarding() {
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
+    }
+  }
+
   Future<void> _showBiometricPrompt() async {
-    // Mostrar un diálogo indicando que se va a usar biometría
     if (!mounted) return;
     
     showDialog(
@@ -127,7 +139,6 @@ class _SplashScreenState extends State<SplashScreen>
     if (result['success']) {
       _navigateToHome();
     } else {
-      // Si falla la biometría, mostrar opción de usar contraseña
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -139,7 +150,6 @@ class _SplashScreenState extends State<SplashScreen>
           ),
         );
         
-        // Después de 2 segundos, ir al login si no se ha navegado
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
             _navigateToLogin();
@@ -212,7 +222,7 @@ class _SplashScreenState extends State<SplashScreen>
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),

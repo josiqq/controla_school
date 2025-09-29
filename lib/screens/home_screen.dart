@@ -1,3 +1,4 @@
+// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import '../widgets/feature_card.dart';
 import '../config/theme.dart';
@@ -15,12 +16,14 @@ class HomeScreen extends StatelessWidget {
           'ControlaSchool',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        foregroundColor: Colors.black,
+        backgroundColor: AppTheme.backgroundColor,
+        foregroundColor: AppTheme.primaryColor,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: 'Configuración',
+            color: AppTheme.primaryColor,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -30,6 +33,7 @@ class HomeScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Cerrar sesión',
+            color: AppTheme.primaryColor,
             onPressed: () {
               _showLogoutDialog(context);
             },
@@ -37,8 +41,7 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(
-        ),
+        color: AppTheme.backgroundColor,
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20.0),
@@ -74,7 +77,7 @@ class HomeScreen extends StatelessWidget {
           gradient: LinearGradient(
             colors: [
               AppTheme.primaryColor.withValues(alpha: 0.1),
-              Colors.white,
+              AppTheme.backgroundColor,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -86,11 +89,11 @@ class HomeScreen extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.15),
+                color: AppTheme.primaryColor.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.green.withValues(alpha: 0.3),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
                     blurRadius: 15,
                     spreadRadius: 2,
                   ),
@@ -99,7 +102,7 @@ class HomeScreen extends StatelessWidget {
               child: const Icon(
                 Icons.check_circle,
                 size: 50,
-                color: Colors.green,
+                color: AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 20),
@@ -117,7 +120,7 @@ class HomeScreen extends StatelessWidget {
               'Has iniciado sesión correctamente',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: AppTheme.textColor.withValues(alpha: 0.7),
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -136,7 +139,7 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.school,
             title: 'Estudiantes',
             value: '0',
-            color: Colors.blue,
+            color: AppTheme.primaryColor,
           ),
         ),
         const SizedBox(width: 15),
@@ -145,7 +148,7 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.class_,
             title: 'Clases',
             value: '0',
-            color: Colors.orange,
+            color: AppTheme.accentColor,
           ),
         ),
         const SizedBox(width: 15),
@@ -154,7 +157,7 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.event,
             title: 'Eventos',
             value: '0',
-            color: Colors.purple,
+            color: AppTheme.primaryColor.withValues(alpha: 0.8),
           ),
         ),
       ],
@@ -202,7 +205,7 @@ class HomeScreen extends StatelessWidget {
               title,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[600],
+                color: AppTheme.textColor.withValues(alpha: 0.7),
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -232,12 +235,29 @@ class HomeScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Cerrar Sesión'),
-          content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Cerrar Sesión',
+            style: TextStyle(
+              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            '¿Estás seguro de que deseas cerrar sesión?',
+            style: TextStyle(color: AppTheme.textColor),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar'),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(
+                  color: AppTheme.textColor.withValues(alpha: 0.6),
+                ),
+              ),
             ),
             TextButton(
               onPressed: () {
