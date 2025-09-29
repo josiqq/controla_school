@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../services/auth_service.dart';
 import '../widgets/login_form.dart';
-import '../widgets/biometric_button.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,31 +14,47 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
-  bool _biometricAvailable = false;
+  bool _showBiometricOption = false;
 
   @override
   void initState() {
     super.initState();
-    _checkBiometricAvailability();
+    _checkBiometricOption();
   }
 
-  Future<void> _checkBiometricAvailability() async {
-    final isAvailable = await _authService.checkBiometricAvailability();
+  Future<void> _checkBiometricOption() async {
+    // Verificar si hay un email guardado y si la biometría está disponible
+    final savedEmail = await _authService.getSavedEmail();
+    final biometricAvailable = await _authService.checkBiometricAvailability();
+    final biometricEnabled = await _authService.isBiometricEnabled();
+    
     setState(() {
-      _biometricAvailable = isAvailable;
+      _showBiometricOption = savedEmail != null && 
+                             biometricAvailable && 
+                             biometricEnabled;
     });
   }
 
   void _handleLoginSuccess() {
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
   }
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
+  }
+
+  Future<void> _handleBiometricLogin() async {
+    final result = await _authService.loginWithBiometric();
+    
+    if (result['success']) {
+      _handleLoginSuccess();
+    } else {
+      _showMessage(result['message'] ?? 'Autenticación biométrica fallida');
+    }
   }
 
   @override
@@ -61,8 +76,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   _buildLoginCard(),
                   const SizedBox(height: 20),
                   _buildRegisterLink(),
-                  const SizedBox(height: 10),
-                  // _buildTestCredentials(),
                 ],
               ),
             ),
@@ -96,9 +109,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildTitle() {
-    return Column(
+    return const Column(
       children: [
-        const Text(
+        Text(
           'Bienvenid@',
           style: TextStyle(
             fontSize: 32,
@@ -106,8 +119,8 @@ class _LoginScreenState extends State<LoginScreen> {
             color: Colors.white,
           ),
         ),
-        const SizedBox(height: 8),
-        const Text(
+        SizedBox(height: 8),
+        Text(
           'Inicia sesión para continuar',
           style: TextStyle(fontSize: 16, color: Colors.white70),
         ),
@@ -131,11 +144,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: Column(
         children: [
-          LoginForm(
-            onLoginSuccess: _handleLoginSuccess,
-            onShowMessage: _showMessage,
-          ),
-          if (_biometricAvailable) ...[
+          if (_showBiometricOption) ...[
+            _buildBiometricButton(),
             const SizedBox(height: 20),
             const Row(
               children: [
@@ -148,12 +158,37 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            BiometricButton(
-              onSuccess: _handleLoginSuccess,
-              onError: _showMessage,
-            ),
           ],
+          LoginForm(
+            onLoginSuccess: _handleLoginSuccess,
+            onShowMessage: _showMessage,
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBiometricButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: OutlinedButton.icon(
+        onPressed: _handleBiometricLogin,
+        icon: const Icon(Icons.fingerprint, size: 28),
+        label: const Text(
+          'Usar Biometría',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppTheme.primaryColor,
+          side: const BorderSide(color: AppTheme.primaryColor, width: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       ),
     );
   }
@@ -180,31 +215,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ],
     );
   }
-
-  // Widget _buildTestCredentials() {
-  //   return Container(
-  //     padding: const EdgeInsets.all(12),
-  //     decoration: BoxDecoration(
-  //       color: Colors.white.withValues(alpha: 0.2),
-  //       borderRadius: BorderRadius.circular(8),
-  //     ),
-  //     child: const Column(
-  //       children: [
-  //         Text(
-  //           'Credenciales de prueba:',
-  //           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-  //         ),
-  //         SizedBox(height: 4),
-  //         Text(
-  //           'Email: admin@school.com',
-  //           style: TextStyle(color: Colors.white70, fontSize: 12),
-  //         ),
-  //         Text(
-  //           'Contraseña: 123456',
-  //           style: TextStyle(color: Colors.white70, fontSize: 12),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 }

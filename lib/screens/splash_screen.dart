@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../config/theme.dart';
 import '../config/constants.dart';
+import '../services/auth_service.dart';
 import 'login_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -17,12 +19,14 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<double> _rotationAnimation;
+  
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _navigateToLogin();
+    _checkAuthStatus();
   }
 
   void _initializeAnimations() {
@@ -55,14 +59,110 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
   }
 
-  void _navigateToLogin() {
-    Timer(AppConstants.splashDuration, () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
+  Future<void> _checkAuthStatus() async {
+    // Esperar un mínimo de tiempo para mostrar el splash
+    await Future.delayed(const Duration(seconds: 2));
+    
+    try {
+      // Verificar si hay un usuario autenticado
+      final currentUser = _authService.currentUser;
+      
+      if (currentUser != null) {
+        // Usuario ya autenticado, verificar si tiene biometría habilitada
+        final biometricEnabled = await _authService.isBiometricEnabled();
+        final biometricAvailable = await _authService.checkBiometricAvailability();
+        
+        if (biometricEnabled && biometricAvailable) {
+          // Intentar autenticación biométrica
+          _showBiometricPrompt();
+        } else {
+          // Ir directo a home si no hay biometría configurada
+          _navigateToHome();
+        }
+      } else {
+        // No hay usuario autenticado, ir al login
+        _navigateToLogin();
       }
-    });
+    } catch (e) {
+      // En caso de error, ir al login
+      _navigateToLogin();
+    }
+  }
+
+  Future<void> _showBiometricPrompt() async {
+    // Mostrar un diálogo indicando que se va a usar biometría
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Autenticación Biométrica'),
+          content: const Text('Usa tu huella dactilar o Face ID para continuar'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _navigateToLogin();
+              },
+              child: const Text('Usar contraseña'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _authenticateWithBiometric();
+              },
+              child: const Text('Autenticar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _authenticateWithBiometric() async {
+    final result = await _authService.loginWithBiometric();
+    
+    if (result['success']) {
+      _navigateToHome();
+    } else {
+      // Si falla la biometría, mostrar opción de usar contraseña
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Autenticación fallida'),
+            action: SnackBarAction(
+              label: 'Usar contraseña',
+              onPressed: _navigateToLogin,
+            ),
+          ),
+        );
+        
+        // Después de 2 segundos, ir al login si no se ha navegado
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            _navigateToLogin();
+          }
+        });
+      }
+    }
+  }
+
+  void _navigateToHome() {
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    }
+  }
+
+  void _navigateToLogin() {
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
   }
 
   @override
@@ -110,6 +210,13 @@ class _SplashScreenState extends State<SplashScreen>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
           child: const Icon(
             Icons.school_rounded,
@@ -139,11 +246,11 @@ class _SplashScreenState extends State<SplashScreen>
   Widget _buildSubtitle() {
     return Opacity(
       opacity: _fadeAnimation.value,
-      child: Text(
+      child: const Text(
         'Gestión Educativa',
         style: TextStyle(
           fontSize: 18,
-          color: Colors.white,
+          color: Colors.white70,
           letterSpacing: 1,
         ),
       ),

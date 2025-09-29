@@ -42,10 +42,10 @@ class _LoginFormState extends State<LoginForm> {
 
       setState(() => _isLoading = false);
 
-      if (success) {
+      if (success['success']) {
         widget.onLoginSuccess();
       } else {
-        widget.onShowMessage('Credenciales incorrectas');
+        widget.onShowMessage(success['message']);
       }
     }
   }
