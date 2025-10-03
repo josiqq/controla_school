@@ -14,48 +14,78 @@ exports.sendNotificationFromQueue = onDocumentCreated(
         return null;
       }
 
+      // Configuración mejorada del mensaje para segundo plano
       const message = {
         notification: {
           title: data.title,
           body: data.body,
         },
-        data: data.data || {},
+        data: {
+          // Convertir todos los datos a strings (requisito de FCM)
+          ...(data.data || {}),
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
+          // Agregar timestamp para debugging
+          timestamp: Date.now().toString(),
+        },
         token: data.fcmToken,
+        // Configuración CRÍTICA para Android
         android: {
           priority: "high",
           notification: {
             channelId: "high_importance_channel",
             sound: "default",
             priority: "high",
+            // IMPORTANTE: contentAvailable debe ser true
+            visibility: "public",
+            defaultSound: true,
+            defaultVibrateTimings: true,
           },
+          // Configuración para que funcione en segundo plano
+          collapseKey: "controlaschool",
+          ttl: 86400, // 24 horas en segundos
         },
+        // Configuración CRÍTICA para iOS
         apns: {
+          headers: {
+            "apns-priority": "10",
+            "apns-push-type": "alert",
+          },
           payload: {
             aps: {
-              sound: "default",
-              badge: 1,
+              "alert": {
+                title: data.title,
+                body: data.body,
+              },
+              "sound": "default",
+              "badge": 1,
+              // IMPORTANTE para iOS
+              "content-available": 1,
+              "mutable-content": 1,
             },
           },
         },
       };
 
       try {
-        await admin.messaging().send(message);
-        console.log("Notificación enviada exitosamente");
+        const response = await admin.messaging().send(message);
+        console.log("Notificación enviada exitosamente:", response);
 
         // Marcar como enviada
         await event.data.ref.update({
           sent: true,
           sentAt: admin.firestore.FieldValue.serverTimestamp(),
+          messageId: response,
         });
 
         return null;
       } catch (error) {
         console.error("Error al enviar notificación:", error);
 
-        // Registrar el error
+        // Registrar el error con más detalles
         await event.data.ref.update({
           error: error.message,
+          errorCode: error.code,
+          errorDetails: JSON.stringify(error),
           errorAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
@@ -136,11 +166,33 @@ exports.onTaskCreated = onDocumentCreated(
           type: "task",
           taskId: event.params.taskId,
           classId: classId,
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
+        },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "high_importance_channel",
+            sound: "default",
+            priority: "high",
+            visibility: "public",
+          },
+        },
+        apns: {
+          headers: {
+            "apns-priority": "10",
+          },
+          payload: {
+            aps: {
+              "sound": "default",
+              "badge": 1,
+              "content-available": 1,
+            },
+          },
         },
       };
 
       // Enviar a múltiples dispositivos
-      const response = await admin.messaging().sendMulticast({
+      const response = await admin.messaging().sendEachForMulticast({
         tokens: tokens,
         ...message,
       });
@@ -149,6 +201,16 @@ exports.onTaskCreated = onDocumentCreated(
           `${response.successCount} notificaciones enviadas, ` +
       `${response.failureCount} fallidas`,
       );
+
+      // Log de tokens que fallaron
+      if (response.failureCount > 0) {
+        response.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            console.error(`Error en token ${tokens[idx]}:`, resp.error);
+          }
+        });
+      }
+
       return null;
     },
 );
@@ -203,11 +265,33 @@ exports.onEventCreated = onDocumentCreated(
           type: "event",
           eventId: event.params.eventId,
           classId: classId,
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
+        },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "high_importance_channel",
+            sound: "default",
+            priority: "high",
+            visibility: "public",
+          },
+        },
+        apns: {
+          headers: {
+            "apns-priority": "10",
+          },
+          payload: {
+            aps: {
+              "sound": "default",
+              "badge": 1,
+              "content-available": 1,
+            },
+          },
         },
       };
 
       // Enviar a múltiples dispositivos
-      const response = await admin.messaging().sendMulticast({
+      const response = await admin.messaging().sendEachForMulticast({
         tokens: tokens,
         ...message,
       });
@@ -277,10 +361,32 @@ exports.checkDueTasks = onSchedule("every 1 hours", async (event) => {
           type: "task_reminder",
           taskId: taskDoc.id,
           classId: taskData.classId,
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
+        },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "high_importance_channel",
+            sound: "default",
+            priority: "high",
+            visibility: "public",
+          },
+        },
+        apns: {
+          headers: {
+            "apns-priority": "10",
+          },
+          payload: {
+            aps: {
+              "sound": "default",
+              "badge": 1,
+              "content-available": 1,
+            },
+          },
         },
       };
 
-      await admin.messaging().sendMulticast({
+      await admin.messaging().sendEachForMulticast({
         tokens: tokens,
         ...message,
       });
@@ -289,4 +395,93 @@ exports.checkDueTasks = onSchedule("every 1 hours", async (event) => {
 
   console.log(`Procesadas ${tasksSnapshot.size} tareas`);
   return null;
+});
+
+// Función HTTP para testing (útil para debugging)
+const {onRequest} = require("firebase-functions/v2/https");
+
+exports.testNotification = onRequest(async (req, res) => {
+  const {userId, title, body} = req.body;
+
+  if (!userId) {
+    res.status(400).send({error: "userId es requerido"});
+    return;
+  }
+
+  try {
+    const userDoc = await admin.firestore()
+        .collection("users")
+        .doc(userId)
+        .get();
+
+    if (!userDoc.exists) {
+      res.status(404).send({error: "Usuario no encontrado"});
+      return;
+    }
+
+    const userData = userDoc.data();
+    const fcmToken = userData.fcmToken;
+
+    if (!fcmToken) {
+      res.status(400).send({error: "Usuario no tiene FCM token"});
+      return;
+    }
+
+    const message = {
+      notification: {
+        title: title || "🧪 Test de Notificación",
+        body: body || "Esta es una notificación desde Cloud Functions",
+      },
+      data: {
+        type: "test",
+        timestamp: Date.now().toString(),
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+      },
+      token: fcmToken,
+      android: {
+        priority: "high",
+        notification: {
+          channelId: "high_importance_channel",
+          sound: "default",
+          priority: "high",
+          visibility: "public",
+          defaultSound: true,
+          defaultVibrateTimings: true,
+        },
+      },
+      apns: {
+        headers: {
+          "apns-priority": "10",
+          "apns-push-type": "alert",
+        },
+        payload: {
+          aps: {
+            "alert": {
+              title: title || "🧪 Test de Notificación",
+              body: body || "Esta es una notificación de prueba",
+            },
+            "sound": "default",
+            "badge": 1,
+            "content-available": 1,
+            "mutable-content": 1,
+          },
+        },
+      },
+    };
+
+    const response = await admin.messaging().send(message);
+
+    res.status(200).send({
+      success: true,
+      messageId: response,
+      message: "Notificación enviada exitosamente",
+    });
+  } catch (error) {
+    console.error("Error en testNotification:", error);
+    res.status(500).send({
+      error: error.message,
+      code: error.code,
+      details: JSON.stringify(error),
+    });
+  }
 });
