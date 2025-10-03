@@ -1,1 +1,41 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"controlaschool","appId":"1:168420306099:android:cbe835d7537a1e2df414c6","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"controlaschool","configurations":{"android":"1:168420306099:android:cbe835d7537a1e2df414c6","ios":"1:168420306099:ios:ed1a5443a46a0b1af414c6","macos":"1:168420306099:ios:ed1a5443a46a0b1af414c6","web":"1:168420306099:web:0bbe947678062dbcf414c6","windows":"1:168420306099:web:657ec057e18b39d9f414c6"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "controlaschool",
+          "appId": "1:168420306099:android:cbe835d7537a1e2df414c6",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "controlaschool",
+          "configurations": {
+            "android": "1:168420306099:android:cbe835d7537a1e2df414c6",
+            "ios": "1:168420306099:ios:ed1a5443a46a0b1af414c6",
+            "macos": "1:168420306099:ios:ed1a5443a46a0b1af414c6",
+            "web": "1:168420306099:web:0bbe947678062dbcf414c6",
+            "windows": "1:168420306099:web:657ec057e18b39d9f414c6"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint"
+      ]
+    }
+  ]
+}

@@ -38,7 +38,7 @@ class BottomNavBar extends StatelessWidget {
           NavigationDestination(
             icon: Icon(Icons.school_outlined),
             selectedIcon: Icon(Icons.school_rounded, color: AppTheme.primaryColor),
-            label: 'Estudiantes',
+            label: 'Clases',
           ),
           NavigationDestination(
             icon: Icon(Icons.event_outlined),
